@@ -1,0 +1,132 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <style>
+
+    </style>
+</head>
+<body>
+    <center>
+        <h1 style="color:#0099ff;">Item Details</h1>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;<input type="text" id="itemname" autocomplete="off" placeholder="Search">
+        <button type="button" onclick="SearchDetails()">Search:</button>
+        <br><br>
+        <div id="table"></div><br>
+        <div class="row" id="model" >
+            <div class="row">
+                <div class="col-md-5"></div>
+                <div class="col-md-2"><label style="color:purple"><U>ORDER FOOD ITEM</U></label></div>
+                <input type="text" name="restaurent" class="form-control" id="id" required>
+
+                <div class="col-md-5"></div>
+            </div><br>
+            <div class="row">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-2"><label for="">User:</label>
+                    <input type="text" name="user" class="form-control" id="user" required>
+                </div>
+                <div class="col-sm-2"><label for="">Restaurent:</label>
+                    <input type="text" name="itemType" class="form-control" id="restaurent" required>
+                </div>
+                <div class="col-sm-2"><label for="">ItemName:</label>
+                    <input type="text" name="item" class="form-control" disabled="false" id="itemName" required>
+                </div>
+
+                <div class="col-sm-3"></div>
+            </div><br>
+            <div class="row">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-2"><label for="">Rate:</label>
+                    <input type="text" name="rate" class="form-control" disabled="false" id="rate" required>
+                </div>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label for="">quantity:</label>
+                        <input type="text" class="form-control" id="quantity" name="quantity" required>
+    </center>
+    </div>
+</body>
+<script>
+    const userid = sessionStorage.getItem("id");
+
+     document.getElementById("model").style.display = 'none';
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function loadItmesData(records) {
+        const items = JSON.parse(records);
+        const tableHeader = `<tr><th style="text-align:center">Sno</th><th style="height:20%;text-align:center">Restaurent</th><th style="height:20%;text-align:center">itemType</th><th style="height:20%;text-align:center">itemName</th><th style="height:20%;text-align:center">rate</th><th style="height:20%;text-align:center">Image</th><th>Actions</th></tr>`;
+        let tableRows = items.map((item, index) => {
+            let addtocart = `<button class="fa fa-edit"  style="color:blue" id="${item.id}"  onclick="addtocart(event)">AddtoCart</button>`;
+            return `<tr><td>${index + 1}</td><td>${item.restaurent}</td><td>${item.itemType}</td><td>${item.itemName}</td><td>${item.rate}</td><td><img src="${item.image}" height="30" width="50"/></td><td align="center">${addtocart}</td></tr>`;
+        });
+        document.getElementById("table").innerHTML = `<table  border="2"> ${tableHeader}${tableRows.join('')}</table>`;
+    }
+
+    function SearchDetails() {
+        const itemName = document.getElementById("itemname").value;
+        const getUsersPromise = performAjax("GET", `http://localhost:5000/User/itemNames?itemName=${itemName}`);
+        getUsersPromise
+            .then((List) => {
+                loadItmesData(List);
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+
+    function addtocart(event) {
+        event.preventDefault();
+        const getItemPromise = performAjax("GET", `http://localhost:5000/Restaurent/editItems/${event.target.id}`);
+        getItemPromise
+            .then((data) => {
+                const item = JSON.parse(data);
+                [item].map(rec => {
+                    const quantity = '1';
+                    const amount = document.getElementById("rate").value = rec.rate;
+                    const addPromise = performAjax(
+                        "POST", "http://localhost:5000/User/addtocart",
+                        JSON.stringify({ user: userid, item:event.target.id})
+                    );
+                    addPromise
+                        .then(newList => {
+                            alert("succefully added");
+                            window.open("viewcartdetails", "_self");
+                
+                        })
+                        .catch(err => {
+                        alert(err.message);
+                    })
+                })
+                    
+            })
+    }
+
+</script>
+</html>

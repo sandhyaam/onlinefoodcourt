@@ -1,0 +1,151 @@
+<html>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<br>
+
+<body onload="getData()">
+    <center><input type="hidden" name="id" id="id" class="form-control" required>
+            <div class="row">
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4"><label style="color:purple"> <h4>RESTAURANT PERSONAL DETAILS</h4></label></div>
+                    <div class="col-md-4"></div>
+                </div><br>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label for="">First Name:</label>
+                        <input type="text" name="firstName"  class="form-control" id="firstName" placeholder="enter ur FirstName" 
+                            required>
+                    </div>
+                    <div class="col-sm-2"><label for="">Last Name:</label>
+                        <input type="text" name="lastName" class="form-control" id="lastName" placeholder="enter ur LastName" required>
+                    </div>
+                    <div class="col-sm-2"><label for="">User Name:</label>
+                        <input type="text" name="userName" class="form-control" id="userName" placeholder="enter ur userName" required>
+                    </div>
+                    <div class="col-sm-3"></div>
+                </div><br>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label for="">Contact No:</label>
+                        <input type="number" name="phoneNo"  class="form-control" id="phoneNo" placeholder="enter ur phoneno" 
+                            required>
+                    </div>
+                    <div class="col-sm-2"><label for="">Email Id:</label>
+                        <input type="text" name="email" class="form-control" id="email" placeholder="enter ur email" required>
+                    </div>
+                    <div class="col-sm-2"><label for="">Restaurent Name:</label>
+                        <input type="text" name="restaurent" class="form-control" id="restaurent" placeholder="Restaurent Name" required>
+                    </div>
+                    <div class="col-sm-3"></div>
+                </div><br>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label>Mobile Number:</label></div>
+                    <div class="col-sm-3"><input type="text" id="contactNo" placeholder="Mobile Number" class="form-control">
+                    </div>
+                    <div class="col-sm-4"></div>
+                </div><br>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label>Address:</label></div>
+                    <div class="col-sm-3"><textarea name="Address" id="address" placeholder="Address"
+                            class="form-control"></textarea></div>
+                    <div class="col-sm-4"></div>
+                </div><br> <div class="row">
+                <div class="col-sm-3"> </div>
+                        <div class="col-sm-2"><label for="">Status</label></div><br>
+                        <div class="col-sm-3"><input type="radio" name="status" id="active" value="Active" required>Active
+                        <input type="radio" name="status" id="de-active" value="De-Active" required>De-Active
+                </div><div class="col-sm-4"></div>
+            </div><br>
+                <div class="row">
+                    <div class="col-sm-5"></div>
+                    <div class="col-sm-1"><input type="button" id="btnadd" onclick="updateProfile()"
+                            class="btn btn-success" value="Add" /></div>&nbsp;
+                    <div class="col-sm-5"></div>
+                </div><br>
+                <div class="modal-footer" style="border: none">
+        
+                </div>
+                </div>
+        <div class="modal-footer" style="border: none">
+
+        </div>
+        </div>
+    </center>
+</body>
+<script>
+    const userName = sessionStorage.getItem("userName");
+    const id = sessionStorage.getItem("rid");
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+    function getData() {
+        document.getElementById("userName").value = userName;
+        const getUsersPromise = performAjax("GET", `http://localhost:5000/Restaurent/Profile?userName=${userName}`);
+        getUsersPromise
+            .then((data) => {
+                const user = JSON.parse(data)
+                user.map(rec => {
+                    document.getElementById("firstName").value = rec.firstName;
+                    document.getElementById("lastName").value = rec.lastName;
+                    document.getElementById("userName").value = rec.userName;
+                    document.getElementById("phoneNo").value = rec.phoneNo;
+                    document.getElementById("email").value = rec.email;
+                    document.getElementById("restaurent").value = rec.restaurent;
+                    document.getElementById("contactNo").value = rec.contactNo;
+                    document.getElementById("address").value = rec.address;
+                    rec.status === 'De-Active' ? document.getElementById("de-active").checked = true : document.getElementById("active").checked = true;
+
+                });
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+
+    function updateProfile() {
+        const id = document.getElementById("id").value;
+        const fName = document.getElementById("firstName").value;
+        const lName = document.getElementById("lastName").value;
+        const uName = document.getElementById("userName").value;
+        const phNo = document.getElementById("phoneNo").value;
+        const emaill = document.getElementById("email").value;
+        const restaurent = document.getElementById("restaurent").value;
+        const contactNo = document.getElementById("contactNo").value;
+        const address = document.getElementById("address").value;
+        const status = document.getElementById("de-active").checked ? "De-Active" : "Active";
+        const getUpdatePromise = performAjax(
+            "PUT",
+            `http://localhost:5000/Restaurent/updateProfile/${id}`,
+            JSON.stringify({ fName, lName, uName, phNo, emaill, restaurent, contactNo, address, status })
+        );
+        getUpdatePromise
+            .then((updatePromise) => {
+                alert('Details Updated');
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+</script>
+
+</html>
